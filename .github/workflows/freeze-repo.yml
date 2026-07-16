@@ -65,12 +65,13 @@ jobs:
             });
 
   restore-freeze-state:
-    if: github.event_name == 'push' && github.sha != '48bef76442d1f795f8c2e61739da8f66e4da31ca'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: 回滚 gh-pages 到冻结提交
+        if: github.sha != env.FREEZE_COMMIT
         uses: actions/github-script@v7
         with:
           script: |
