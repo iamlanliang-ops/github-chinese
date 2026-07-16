@@ -1,10 +1,20 @@
-name: 仓库已冻结 - 自动关闭议题和拉取请求
+name: 仓库已冻结 - 自动回滚并关闭议题/拉取请求
 
 on:
   issues:
     types: [opened]
   pull_request:
     types: [opened]
+  push:
+    branches:
+      - gh-pages
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FREEZE_COMMIT: 48bef76442d1f795f8c2e61739da8f66e4da31ca
 
 jobs:
   close-issues:
@@ -21,7 +31,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: '⚠️ **本仓库已于 2026年5月17日 冻结，不再接受新的议题或拉取请求。**\n\nThis repository has been frozen as of May 17, 2026. No new issues or pull requests are accepted.'
+              body: '⚠️ **本仓库已冻结在 2026年5月17日 23:00（UTC+8）状态，不再接受任何修改。**\n\nThis repository is frozen at the May 17, 2026 23:00 (UTC+8) state. No modifications are accepted.'
             });
             await github.rest.issues.update({
               owner: context.repo.owner,
@@ -45,11 +55,29 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
-              body: '⚠️ **本仓库已于 2026年5月17日 冻结，不再接受新的议题或拉取请求。**\n\nThis repository has been frozen as of May 17, 2026. No new issues or pull requests are accepted.'
+              body: '⚠️ **本仓库已冻结在 2026年5月17日 23:00（UTC+8）状态，不再接受任何修改。**\n\nThis repository is frozen at the May 17, 2026 23:00 (UTC+8) state. No modifications are accepted.'
             });
             await github.rest.pulls.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number,
               state: 'closed'
+            });
+
+  restore-freeze-state:
+    if: github.event_name == 'push' && github.sha != env.FREEZE_COMMIT
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 回滚 gh-pages 到冻结提交
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.git.updateRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/gh-pages',
+              sha: process.env.FREEZE_COMMIT,
+              force: true
             });
