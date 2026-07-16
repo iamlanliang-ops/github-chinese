@@ -65,7 +65,7 @@ jobs:
             });
 
   restore-freeze-state:
-    if: github.event_name == 'push' && github.sha != env.FREEZE_COMMIT
+    if: github.event_name == 'push' && github.sha != '48bef76442d1f795f8c2e61739da8f66e4da31ca'
     runs-on: ubuntu-latest
     permissions:
       contents: write
